@@ -1,0 +1,13 @@
+If you are interested in postponing the review of card for later you should really have a look at the more popular add-on <a href="https://ankiweb.net/shared/info/880824023" rel="nofollow">Slackers' Delight (Postpone/Defer Button)</a>. This uses a different approach and is created by lovac42 who has made many great add-ons.
+
+this add-on adds two options to Anki:
+
+- a shortcut (configurable) during reviews: This shortcut triggers a combined action: The current card is buried and the card is saved in a temporary list (that's discarded when you close Anki). 
+- a shortcut (configurable) that you can trigger during reviews or from the deck overview which in effect unburies cards that are in the temporary list. 
+
+An add-on with a similar idea named <a href="https://github.com/omega3/anki-musthave-addons-by-ankitest/blob/master/_Later_not_now_button.py" rel="nofollow">later not now</a> exists. But this add-on only calls the function reviewer.nextCard(). The card might come back real quick.
+
+Burying + Unburying is a simple solution. The internals of the anki scheduler are quite complicated and I'm afraid that modifying the cards queues might lead to (rare) errors. An add-on can't influence the scheduling on mobile anyway. So the simple bury/unbury solution should only have the drawbacks that it doesn't survive a restart of Anki (not relevant for me) and that it requires a shortcut to unbury (but this gives you full control).
+
+Feedback, Comments and error reports are welcome - best in <a href="https://github.com/ijgnd/anki__reviewer_selective_bury_and_unbury__postpone_card_for_later/issues" rel="nofollow">my github repo</a>.
+
