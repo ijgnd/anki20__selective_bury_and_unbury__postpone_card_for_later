@@ -1,4 +1,5 @@
 {
     "later_shortcut":"z",
-    "limited_unbury_shortcut":"Alt+z"
+    "limited_unbury_shortcut":"Alt+z",
+    "enable for schedv1": false
 } 

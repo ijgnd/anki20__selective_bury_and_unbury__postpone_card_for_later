@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Copyright/author: ijgnd
                   Ankitects Pty Ltd and contributors
@@ -22,35 +20,50 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from anki.hooks import addHook
 from anki.lang import _
 from aqt.reviewer import Reviewer
-from aqt.utils import tooltip
+from aqt.utils import tooltip, showInfo
 from aqt import mw
 from aqt.qt import *
 
 
-def load_config(conf):
-    global config
-    config=conf
-load_config(mw.addonManager.getConfig(__name__))
-mw.addonManager.setConfigUpdatedAction(__name__,load_config) 
+later_ids = []
+
+def gc(arg, fail=False):
+    conf = mw.addonManager.getConfig(__name__)
+    if conf:
+        return conf.get(arg, fail)
+    return fail
+
+
+msg = ("This add-on doesn't with the default scheduler and sync on Ankiweb for me. You can "
+       "enable this add-on for the default scheduler in the add-on settings. Aborting ...")
+
+
+def use_addon():
+    if mw.col.schedVer() == 2 or gc("enable for schedv1"):
+        return True
+    else:
+        showInfo(msg)
+        return
 
 
 def bury_and_mark_for_limited_unburying():
-    if hasattr(mw.reviewer,"later_ids"):
-        mw.reviewer.later_ids.append(mw.reviewer.card.id)
-    else:
-        mw.reviewer.later_ids = [mw.reviewer.card.id,]
+    global later_ids
+    if not use_addon():
+        return
+    cid = mw.reviewer.card.id
+    later_ids.append(cid)
     #the rest is the contents of reviewer.py - onBuryCard(self):
     mw.checkpoint(_("Bury"))
-    mw.col.sched.buryCards([mw.reviewer.card.id])
+    mw.col.sched.buryCards([cid])
     mw.reset()
-    tooltip(_("later not now."))
+    tooltip("later not now.")
 
 
 def addShortcuts21(shortcuts):
-    shortcuts.append((config['later_shortcut'], bury_and_mark_for_limited_unburying))
+    cut = gc('later_shortcut')
+    if cut:
+        shortcuts.append((cut, bury_and_mark_for_limited_unburying))
 addHook("reviewStateShortcuts", addShortcuts21)
-
-
 
 
 def limited_unbury():
@@ -64,26 +77,34 @@ def limited_unbury():
     you use sibling burying and add 100 notes of a note type that has 50
     cards...)
     """
+    global later_ids
+    if not use_addon():
+        return
     allburied = [int(x) for x in mw.col.findCards("is:buried")]
     to_rebury = []
-    for i in allburied:
-        if not i in mw.reviewer.later_ids:
-            to_rebury.append(i)
-    del mw.reviewer.later_ids
-    mw.col.sched.unburyCards()
-    mw.col.sched.buryCards(to_rebury)
-    mw.reset()
-    tooltip('Unburied the cards that were set as "later not now".')
+    if allburied:
+        for i in allburied:
+            if i not in later_ids:
+                to_rebury.append(i)
+        later_ids = []
+        mw.col.sched.unburyCards()
+        if to_rebury:
+            mw.col.sched.buryCards(to_rebury)
+        mw.reset()
+        tooltip('Unburied the cards that were set as "later not now".')
 
 
 def try_limited_unbury():
-    if hasattr(mw.reviewer,"later_ids"):
+    if later_ids:
         limited_unbury()
     else:
         tooltip('No cards have been postponed so far that could be unburied.')
 
+
 action = QAction(mw)
 action.setText("limited unbury")
-action.setShortcut(QKeySequence(config["limited_unbury_shortcut"]))
+cut = gc("limited_unbury_shortcut")
+if cut:
+    action.setShortcut(QKeySequence(cut))
 mw.form.menuTools.addAction(action)
 action.triggered.connect(try_limited_unbury)
